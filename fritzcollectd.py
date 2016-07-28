@@ -21,10 +21,10 @@
 
 """ fritzcollectd - FRITZ!Box collectd plugin """
 
-__version__ = '0.1.0'
-
 import collectd  # pylint: disable=import-error
 import fritzconnection
+
+__version__ = '0.1.0'
 
 
 class FritzCollectd(object):
@@ -138,10 +138,10 @@ class FritzCollectd(object):
 
         # Construct a dict: {instance: (value_type, value)} from the queried
         # results applying a conversion (if defined)
-        nop = lambda x: x
         result = {
             instance:
-            (value_type, self.CONVERSION.get(key, nop)(values.get(key)))
+            (value_type,
+             self.CONVERSION.get(key, lambda: None)(values.get(key)))
             for key, (instance, value_type) in self.VALUES.items()
         }
         return result
