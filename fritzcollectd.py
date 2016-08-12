@@ -62,6 +62,7 @@ class FritzCollectd(object):
         self._fritz_port = fritzconnection.fritzconnection.FRITZ_TCP_PORT
         self._fritz_user = fritzconnection.fritzconnection.FRITZ_USERNAME
         self._fritz_password = ''
+        self._fritz_hostname = 'fritz.box'
         self._plugin_instance = ''
         self._verbose = False
         self._fc = None
@@ -77,6 +78,8 @@ class FritzCollectd(object):
                 self._fritz_user = node.values[0]
             elif node.key == 'Password':
                 self._fritz_password = node.values[0]
+            elif node.key == 'Hostname':
+                self._fritz_hostname = node.values[0]
             elif node.key == 'Instance':
                 self._plugin_instance = node.values[0]
             else:
@@ -101,6 +104,7 @@ class FritzCollectd(object):
     def _dispatch_value(self, value_type, instance, value):
         """ Dispatch value to collectd """
         val = collectd.Values()
+        val.host = self._fritz_hostname
         val.plugin = self.PLUGIN_NAME
         val.plugin_instance = self._plugin_instance
         val.type = value_type

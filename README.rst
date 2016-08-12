@@ -42,6 +42,7 @@ Add the following to your collectd config (typically ``/etc/collectd.conf``):
         #    Address "fritz.box"
         #    Port 49000
         #    User "dslf-config"
+        #    Hostname "Fritz!Box"
         #    Password "pass"
         #    Instance "1"
         #</Module>
@@ -52,6 +53,7 @@ The plugin recognizes several (optional) configuration parameters.
  * Address: The address of the FRITZ!Box
  * Port: The port of the FRITZ!Box
  * User: Login user name
+ * Hostname: The Hostname, the data is stored for in collectd, defaults to the host executing this plugin
  * Password: Password for authentication
  * Instance: collectd plugin instance
 
