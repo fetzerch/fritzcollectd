@@ -141,7 +141,7 @@ class FritzCollectd(object):
         result = {
             instance:
             (value_type,
-             self.CONVERSION.get(key, lambda: None)(values.get(key)))
+             self.CONVERSION.get(key, lambda x: x)(values.get(key)))
             for key, (instance, value_type) in self.VALUES.items()
         }
         return result
