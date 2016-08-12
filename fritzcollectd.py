@@ -1,5 +1,5 @@
 # fritzcollectd - FRITZ!Box collectd plugin
-# Copyright (c) 2014 Christian Fetzer
+# Copyright (c) 2014-2016 Christian Fetzer
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 import collectd  # pylint: disable=import-error
 import fritzconnection
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 
 class FritzCollectd(object):
