@@ -1,0 +1,25 @@
+image: python:3.5
+
+cache:
+  paths:
+    - /root/.cache
+
+before_script:
+  - pip install tox
+
+flake8:
+  script:
+    - tox -e flake8
+
+pylint:
+  script:
+    - tox -e pylint
+
+py27:
+  image: python:2.7
+  script:
+    - tox -e py27
+
+py35:
+  script:
+    - tox -e py35
