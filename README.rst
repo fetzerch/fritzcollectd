@@ -1,3 +1,7 @@
+.. image:: https://circleci.com/gh/fetzerch/fritzcollectd.svg?style=shield
+    :target: https://circleci.com/gh/fetzerch/fritzcollectd
+    :alt: Circle CI Status
+
 fritzcollectd
 =============
 
