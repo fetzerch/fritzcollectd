@@ -142,6 +142,8 @@ class FritzCollectd(object):
         for service, action in self.SERVICE_ACTIONS:
             values.update(self._fc.call_action(service, action))
 
+        print(values)
+
         # Construct a dict: {instance: (value_type, value)} from the queried
         # results applying a conversion (if defined)
         result = {
