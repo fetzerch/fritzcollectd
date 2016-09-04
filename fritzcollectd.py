@@ -140,16 +140,16 @@ class FritzCollectd(object):
 
         # Combine all values available in SERVICE_ACTIONS into a dict
         for service, action in self.SERVICE_ACTIONS:
-            values.update(self._fc.call_action(service, action))
-
-        print(values)
+            stuff = self._fc.call_action(service, action)
+            print("+++{}.{}={}".format(service, action, stuff))
+            values.update(stuff)
 
         # Construct a dict: {instance: (value_type, value)} from the queried
         # results applying a conversion (if defined)
         result = {
             instance:
             (value_type,
-             self.CONVERSION.get(key, lambda x: x)(values.get(key)))
+             self.CONVERSION.get(key, lambda x: x)(values.get(key, 0)))
             for key, (instance, value_type) in self.VALUES.items()
         }
         return result
