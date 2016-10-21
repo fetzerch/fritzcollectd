@@ -27,6 +27,8 @@ class CollectdMock(mock.Mock):
         MOCK.cb_read()
 
     VALUES = mock.MagicMock()
+    VALUES.host = mock.PropertyMock()
+    VALUES.values = mock.PropertyMock()
     @classmethod
     def Values(cls):
         return cls.VALUES
@@ -119,6 +121,8 @@ def test_basic(fc_class_mock):
         print("classfritzcalls: {}".format(fc_class_mock.mock_calls))
         print("collectd  : {}".format(MOCK.mock_calls))
         print("val  : {}".format(MOCK.Values().mock_calls))
+        print("val  : {}".format(MOCK.Values().values.mock_calls))
+
 
 @nottest
 def test_system_connectionfailure():
