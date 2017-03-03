@@ -1,5 +1,5 @@
 # fritzcollectd - FRITZ!Box collectd plugin
-# Copyright (c) 2014-2016 Christian Fetzer
+# Copyright (c) 2014-2017 Christian Fetzer
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,10 @@
 import collectd  # pylint: disable=import-error
 import fritzconnection
 
-__version__ = '0.2.1'
+__version__ = '0.3.0'
+
+
+CONFIGS = []
 
 
 class FritzCollectd(object):
@@ -59,49 +62,20 @@ class FritzCollectd(object):
         'NewByteReceiveRate': lambda x: 8 * x
     }
 
-    def __init__(self):
-        self._fritz_address = fritzconnection.fritzconnection.FRITZ_IP_ADDRESS
-        self._fritz_port = fritzconnection.fritzconnection.FRITZ_TCP_PORT
-        self._fritz_user = fritzconnection.fritzconnection.FRITZ_USERNAME
-        self._fritz_password = ''
-        self._fritz_hostname = ''
-        self._plugin_instance = ''
-        self._verbose = False
+    def __init__(self,  # pylint: disable=too-many-arguments
+                 address=fritzconnection.fritzconnection.FRITZ_IP_ADDRESS,
+                 port=fritzconnection.fritzconnection.FRITZ_TCP_PORT,
+                 user=fritzconnection.fritzconnection.FRITZ_USERNAME,
+                 password='',
+                 hostname='',
+                 plugin_instance=''):
+        self._fritz_address = address
+        self._fritz_port = port
+        self._fritz_user = user
+        self._fritz_password = password
+        self._fritz_hostname = hostname
+        self._plugin_instance = plugin_instance
         self._fc = None
-
-    def callback_configure(self, config):
-        """ Configure callback """
-        for node in config.children:
-            if node.key == 'Address':
-                self._fritz_address = node.values[0]
-            elif node.key == 'Port':
-                self._fritz_port = int(node.values[0])
-            elif node.key == 'User':
-                self._fritz_user = node.values[0]
-            elif node.key == 'Password':
-                self._fritz_password = node.values[0]
-            elif node.key == 'Hostname':
-                self._fritz_hostname = node.values[0]
-            elif node.key == 'Instance':
-                self._plugin_instance = node.values[0]
-            else:
-                collectd.warning('fritzcollectd: Unknown config %s' % node.key)
-
-    def callback_init(self):
-        """ Init callback
-
-            Initialize the connection to the FRITZ!Box
-        """
-        self.fritz_init()
-
-    def callback_read(self):
-        """ Read callback
-
-            Read data from the FRITZ!Box and dispatch values to collectd.
-        """
-        values = self.fritz_read_data()
-        for instance, (value_type, value) in values.items():
-            self._dispatch_value(value_type, instance, value)
 
     def _dispatch_value(self, value_type, instance, value):
         """ Dispatch value to collectd """
@@ -114,7 +88,7 @@ class FritzCollectd(object):
         val.values = [value]
         val.dispatch()
 
-    def fritz_init(self):
+    def init(self):
         """ Initialize the connection to the FRITZ!Box """
         try:
             self._fc = fritzconnection.FritzConnection(
@@ -124,7 +98,13 @@ class FritzCollectd(object):
             collectd.error("fritzcollectd: Failed to connect to %s" %
                            self._fritz_address)
 
-    def fritz_read_data(self):
+    def read(self):
+        """ Read and dispatch """
+        values = self._read_data()
+        for instance, (value_type, value) in values.items():
+            self._dispatch_value(value_type, instance, value)
+
+    def _read_data(self):
         """ Read data from the FRITZ!Box
 
             The data is read from all actions defined in SERVICE_ACTIONS.
@@ -153,7 +133,39 @@ class FritzCollectd(object):
         return result
 
 
-FC = FritzCollectd()
-collectd.register_config(FC.callback_configure)
-collectd.register_init(FC.callback_init)
-collectd.register_read(FC.callback_read)
+def callback_configure(config):
+    """ Configure callback """
+    params = {}
+    for node in config.children:
+        if node.key == 'Address':
+            params['address'] = node.values[0]
+        elif node.key == 'Port':
+            params['port'] = int(node.values[0])
+        elif node.key == 'User':
+            params['user'] = node.values[0]
+        elif node.key == 'Password':
+            params['password'] = node.values[0]
+        elif node.key == 'Hostname':
+            params['hostname'] = node.values[0]
+        elif node.key == 'Instance':
+            params['plugin_instance'] = node.values[0]
+        else:
+            collectd.warning('fritzcollectd: Unknown config %s' % node.key)
+    CONFIGS.append(FritzCollectd(**params))
+
+
+def callback_init():
+    """ Init callback """
+    for config in CONFIGS:
+        config.init()
+
+
+def callback_read():
+    """ Read callback """
+    for config in CONFIGS:
+        config.read()
+
+
+collectd.register_config(callback_configure)
+collectd.register_init(callback_init)
+collectd.register_read(callback_read)

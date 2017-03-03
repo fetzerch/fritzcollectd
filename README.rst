@@ -72,6 +72,8 @@ to specify `Address` if the router's host name has been changed.
 * Hostname: Hostname that collectd associates with the data (defaults to the
   host executing this plugin)
 
+The module block can be repeated to monitor multiple routers.
+
 Further Information
 -------------------
 
