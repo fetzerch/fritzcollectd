@@ -21,6 +21,8 @@
 
 """ fritzcollectd - FRITZ!Box collectd plugin """
 
+from collections import namedtuple, OrderedDict
+
 import collectd  # pylint: disable=import-error
 import fritzconnection
 
@@ -37,23 +39,26 @@ class FritzCollectd(object):
 
     PLUGIN_NAME = 'fritzbox'
 
-    SERVICE_ACTIONS = [
-        ('WANIPConnection', 'GetStatusInfo'),
-        ('WANCommonInterfaceConfig', 'GetCommonLinkProperties'),
-        ('WANCommonInterfaceConfig', 'GetAddonInfos')
-    ]
+    ServiceAction = namedtuple('ServiceAction', ['service', 'action'])
+    Value = namedtuple('ServiceValue', ['value_instance', 'value_type'])
 
-    VALUES = {
-        'NewPhysicalLinkStatus': ('dslstatus', 'gauge'),
-        'NewConnectionStatus': ('constatus', 'gauge'),
-        'NewUptime': ('uptime', 'uptime'),
-        'NewLayer1DownstreamMaxBitRate': ('downstreammax', 'bitrate'),
-        'NewLayer1UpstreamMaxBitRate': ('upstreammax', 'bitrate'),
-        'NewByteSendRate': ('sendrate', 'bitrate'),
-        'NewByteReceiveRate': ('receiverate', 'bitrate'),
-        'NewTotalBytesSent': ('totalbytessent', 'bytes'),
-        'NewTotalBytesReceived': ('totalbytesreceived', 'bytes')
-    }
+    # Services/Actions/Arguments that are read from the router.
+    # dict: {(service, service_action):
+    #           {action_argument: (value_instance, value_type)}}
+    SERVICE_ACTIONS = OrderedDict([
+        (ServiceAction('WANIPConnection', 'GetStatusInfo'),
+         {'NewConnectionStatus': Value('constatus', 'gauge'),
+          'NewUptime': Value('uptime', 'uptime')}),
+        (ServiceAction('WANCommonInterfaceConfig', 'GetCommonLinkProperties'),
+         {'NewPhysicalLinkStatus': Value('dslstatus', 'gauge'),
+          'NewLayer1DownstreamMaxBitRate': Value('downstreammax', 'bitrate'),
+          'NewLayer1UpstreamMaxBitRate': Value('upstreammax', 'bitrate')}),
+        (ServiceAction('WANCommonInterfaceConfig', 'GetAddonInfos'),
+         {'NewByteSendRate': Value('sendrate', 'bitrate'),
+          'NewByteReceiveRate': Value('receiverate', 'bitrate'),
+          'NewTotalBytesSent': Value('totalbytessent', 'bytes'),
+          'NewTotalBytesReceived': Value('totalbytesreceived', 'bytes')})
+    ])
 
     CONVERSION = {
         'NewPhysicalLinkStatus': lambda x: 1 if x == 'Up' else 0,
@@ -77,14 +82,14 @@ class FritzCollectd(object):
         self._plugin_instance = plugin_instance
         self._fc = None
 
-    def _dispatch_value(self, value_type, instance, value):
+    def _dispatch_value(self, value_type, value_instance, value):
         """ Dispatch value to collectd """
         val = collectd.Values()
         val.host = self._fritz_hostname
         val.plugin = self.PLUGIN_NAME
         val.plugin_instance = self._plugin_instance
         val.type = value_type
-        val.type_instance = instance
+        val.type_instance = value_instance
         val.values = [value]
         val.dispatch()
 
@@ -100,37 +105,40 @@ class FritzCollectd(object):
 
     def read(self):
         """ Read and dispatch """
-        values = self._read_data()
-        for instance, (value_type, value) in values.items():
-            self._dispatch_value(value_type, instance, value)
+        values = self._read_data(self.SERVICE_ACTIONS, self._fc)
+        for value_instance, (value_type, value) in values.items():
+            self._dispatch_value(value_type, value_instance, value)
 
-    def _read_data(self):
+    @classmethod
+    def _read_data(cls, service_actions, connection):
         """ Read data from the FRITZ!Box
 
-            The data is read from all actions defined in SERVICE_ACTIONS.
+            The data is read from all services & actions defined in
+            SERVICE_ACTIONS.
             This function returns a dict in the following format:
-            {instance: (value_type, value)} where value_type and instance are
-            mapped from VALUES and CONVERSION.
+            {value_instance: (value_type, value)}
         """
-        values = {}
 
         # Don't try to gather data if the connection is not available
-        if self._fc is None:
-            return values
+        if connection is None:
+            return {}
 
-        # Combine all values available in SERVICE_ACTIONS into a dict
-        for service, action in self.SERVICE_ACTIONS:
-            values.update(self._fc.call_action(service, action))
-
-        # Construct a dict: {instance: (value_type, value)} from the queried
-        # results applying a conversion (if defined)
-        result = {
-            instance:
-            (value_type,
-             self.CONVERSION.get(key, lambda x: x)(values.get(key)))
-            for key, (instance, value_type) in self.VALUES.items()
-        }
-        return result
+        # Construct a dict: {value_instance: (value_type, value)} from the
+        # queried results and applies a value conversion (if defined)
+        values = {}
+        for service_action in service_actions:
+            readings = connection.call_action(service_action.service,
+                                              service_action.action)
+            values.update({
+                value.value_instance: (
+                    value.value_type,
+                    cls.CONVERSION.get(action_argument, lambda x: x)(
+                        readings[action_argument])
+                )
+                for (action_argument, value)
+                in service_actions[service_action].items()
+            })
+        return values
 
 
 def callback_configure(config):
