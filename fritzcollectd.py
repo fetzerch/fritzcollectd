@@ -60,6 +60,13 @@ class FritzCollectd(object):
           'NewTotalBytesReceived': Value('totalbytesreceived', 'bytes')})
     ])
 
+    # Services/Actions that require authentication with password
+    SERVICE_ACTIONS_AUTH = OrderedDict([
+        (ServiceAction('LANEthernetInterfaceConfig', 'GetStatistics'),
+         {'NewBytesSent': Value('lan_totalbytessent', 'bytes'),
+          'NewBytesReceived': Value('lan_totalbytesreceived', 'bytes')}),
+    ])
+
     CONVERSION = {
         'NewPhysicalLinkStatus': lambda x: 1 if x == 'Up' else 0,
         'NewConnectionStatus': lambda x: 1 if x == 'Connected' else 0,
@@ -81,6 +88,7 @@ class FritzCollectd(object):
         self._fritz_hostname = hostname
         self._plugin_instance = plugin_instance
         self._fc = None
+        self._fc_auth = None
 
     def _dispatch_value(self, value_type, value_instance, value):
         """ Dispatch value to collectd """
@@ -98,7 +106,12 @@ class FritzCollectd(object):
         try:
             self._fc = fritzconnection.FritzConnection(
                 address=self._fritz_address, port=self._fritz_port,
-                user=self._fritz_user, password=self._fritz_password)
+                user=self._fritz_user)
+
+            if self._fritz_password != '':
+                self._fc_auth = fritzconnection.FritzConnection(
+                    address=self._fritz_address, port=self._fritz_port,
+                    user=self._fritz_user, password=self._fritz_password)
         except IOError:
             collectd.error("fritzcollectd: Failed to connect to %s" %
                            self._fritz_address)
@@ -106,6 +119,10 @@ class FritzCollectd(object):
     def read(self):
         """ Read and dispatch """
         values = self._read_data(self.SERVICE_ACTIONS, self._fc)
+        for value_instance, (value_type, value) in values.items():
+            self._dispatch_value(value_type, value_instance, value)
+
+        values = self._read_data(self.SERVICE_ACTIONS_AUTH, self._fc_auth)
         for value_instance, (value_type, value) in values.items():
             self._dispatch_value(value_type, value_instance, value)
 
