@@ -26,6 +26,8 @@ from collections import namedtuple, OrderedDict
 import collectd  # pylint: disable=import-error
 import fritzconnection
 
+from lxml.etree import XMLSyntaxError  # pylint: disable=no-name-in-module
+
 __version__ = '0.3.0'
 
 
@@ -107,11 +109,19 @@ class FritzCollectd(object):
             self._fc = fritzconnection.FritzConnection(
                 address=self._fritz_address, port=self._fritz_port,
                 user=self._fritz_user)
+            if len(self._fc.call_action('WANIPConnection',
+                                        'GetStatusInfo')) == 0:
+                raise ValueError("Statusinformation via UPnP is not enabled")
 
             if self._fritz_password != '':
                 self._fc_auth = fritzconnection.FritzConnection(
                     address=self._fritz_address, port=self._fritz_port,
                     user=self._fritz_user, password=self._fritz_password)
+                try:
+                    self._fc_auth.call_action('WANIPConnection',
+                                              'GetStatusInfo')
+                except XMLSyntaxError:
+                    raise ValueError("Incorrect password")
         except IOError:
             collectd.error("fritzcollectd: Failed to connect to %s" %
                            self._fritz_address)
