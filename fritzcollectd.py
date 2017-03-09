@@ -201,6 +201,12 @@ def callback_read():
         config.read()
 
 
+def callback_shutdown():
+    """ Shutdown callback """
+    del CONFIGS[:]
+
+
 collectd.register_config(callback_configure)
 collectd.register_init(callback_init)
 collectd.register_read(callback_read)
+collectd.register_shutdown(callback_shutdown)
