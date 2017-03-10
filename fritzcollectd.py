@@ -105,26 +105,27 @@ class FritzCollectd(object):
 
     def init(self):
         """ Initialize the connection to the FRITZ!Box """
-        try:
-            self._fc = fritzconnection.FritzConnection(
-                address=self._fritz_address, port=self._fritz_port,
-                user=self._fritz_user)
-            if len(self._fc.call_action('WANIPConnection',
-                                        'GetStatusInfo')) == 0:
-                raise ValueError("Statusinformation via UPnP is not enabled")
+        self._fc = fritzconnection.FritzConnection(
+            address=self._fritz_address, port=self._fritz_port,
+            user=self._fritz_user)
+        if self._fc.modelname is None:
+            raise IOError("fritzcollectd: Failed to connect to %s" %
+                          self._fritz_address)
 
-            if self._fritz_password != '':
-                self._fc_auth = fritzconnection.FritzConnection(
-                    address=self._fritz_address, port=self._fritz_port,
-                    user=self._fritz_user, password=self._fritz_password)
-                try:
-                    self._fc_auth.call_action('WANIPConnection',
-                                              'GetStatusInfo')
-                except XMLSyntaxError:
-                    raise ValueError("Incorrect password")
-        except IOError:
-            collectd.error("fritzcollectd: Failed to connect to %s" %
-                           self._fritz_address)
+        if len(self._fc.call_action('WANIPConnection',
+                                    'GetStatusInfo')) == 0:
+            raise IOError("fritzcollectd: Statusinformation via UPnP is "
+                          "not enabled")
+
+        if self._fritz_password != '':
+            self._fc_auth = fritzconnection.FritzConnection(
+                address=self._fritz_address, port=self._fritz_port,
+                user=self._fritz_user, password=self._fritz_password)
+            try:
+                self._fc_auth.call_action('WANIPConnection',
+                                          'GetStatusInfo')
+            except XMLSyntaxError:
+                raise IOError("fritzcollectd: Incorrect password")
 
     def read(self):
         """ Read and dispatch """
