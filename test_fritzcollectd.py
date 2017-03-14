@@ -172,3 +172,23 @@ def test_basic(fc_class_mock):
 
     MOCK.process()
     assert len(MOCK.values) > 0
+
+
+@mock.patch('fritzconnection.FritzConnection', autospec=True)
+@with_setup(teardown=MOCK.reset_mock)
+def test_configuration(fc_class_mock):
+    """ Test if configuration parameters have the intended behavior. """
+    config = CollectdConfig({'Address': 'localhost', 'Port': 1234,
+                             'User': 'user', 'Password': 'password',
+                             'Hostname': 'hostname', 'Instance': 'instance',
+                             'UNKNOWN': 'UNKNOWN'})
+    fc_class_mock.return_value = FritzConnectionMock()
+
+    MOCK.process(config)
+    fc_class_mock.assert_has_calls(
+        [mock.call(address='localhost', password='password',
+                   port=1234, user='user')])
+    assert MOCK.warning.called
+    assert len(MOCK.values) > 0
+    assert MOCK.values[0].host == 'hostname'
+    assert MOCK.values[0].plugin_instance == 'instance'
