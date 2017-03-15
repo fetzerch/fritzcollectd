@@ -26,7 +26,8 @@ import sys
 
 import mock
 
-from nose.tools import with_setup
+from lxml.etree import XMLSyntaxError  # pylint: disable=no-name-in-module
+from nose.tools import raises, with_setup
 
 
 class CollectdMock(object):
@@ -192,3 +193,36 @@ def test_configuration(fc_class_mock):
     assert len(MOCK.values) > 0
     assert MOCK.values[0].host == 'hostname'
     assert MOCK.values[0].plugin_instance == 'instance'
+
+
+@mock.patch('fritzconnection.FritzConnection', autospec=True)
+@with_setup(teardown=MOCK.reset_mock)
+@raises(IOError)
+def test_connection_error(fc_class_mock):
+    """ Simulate connection error to router. """
+    fc_mock = FritzConnectionMock()
+    fc_class_mock.return_value = fc_mock
+    type(fc_mock).modelname = mock.PropertyMock(return_value=None)
+    MOCK.process()
+
+
+@mock.patch('fritzconnection.FritzConnection', autospec=True)
+@with_setup(teardown=MOCK.reset_mock)
+@raises(IOError)
+def test_upnp_status_disabled(fc_class_mock):
+    """ Simulate that UPnP status is deactivated on router.  """
+    fc_mock = FritzConnectionMock()
+    fc_class_mock.return_value = fc_mock
+    fc_mock.call_action.side_effect = [{}]
+    MOCK.process()
+
+
+@mock.patch('fritzconnection.FritzConnection', autospec=True)
+@with_setup(teardown=MOCK.reset_mock)
+@raises(IOError)
+def test_incorrect_password(fc_class_mock):
+    """ Simulate an incorrect password on router. """
+    fc_mock = FritzConnectionMock()
+    fc_class_mock.return_value = fc_mock
+    fc_mock.call_action.side_effect = [{0}, XMLSyntaxError(0, 0, 0, 0)]
+    MOCK.process(CollectdConfig({'Password': 'incorrect'}))
