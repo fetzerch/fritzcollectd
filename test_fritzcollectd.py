@@ -27,7 +27,7 @@ import sys
 import mock
 
 from lxml.etree import XMLSyntaxError  # pylint: disable=no-name-in-module
-from nose.tools import raises, with_setup
+from nose.tools import raises, nottest, with_setup
 
 
 class CollectdMock(object):
@@ -226,3 +226,22 @@ def test_incorrect_password(fc_class_mock):
     fc_class_mock.return_value = fc_mock
     fc_mock.call_action.side_effect = [{0}, XMLSyntaxError(0, 0, 0, 0)]
     MOCK.process(CollectdConfig({'Password': 'incorrect'}))
+
+
+# System tests that try to interact with a real hardware device.
+
+@nottest
+@with_setup(teardown=MOCK.reset_mock)
+def test_system_connection():
+    """ System test: Read values of real router. """
+    MOCK.process()
+    print(MOCK.values)
+    assert len(MOCK.values) > 0
+
+
+@nottest
+@with_setup(teardown=MOCK.reset_mock)
+@raises(IOError)
+def test_system_connectionfailure():
+    """ System test: Attempt to connect to localhost (connection failure). """
+    MOCK.process(CollectdConfig({'Address': 'localhost'}))
