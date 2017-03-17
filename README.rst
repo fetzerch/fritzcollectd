@@ -2,6 +2,10 @@
     :target: https://circleci.com/gh/fetzerch/fritzcollectd
     :alt: Circle CI Status
 
+.. image:: https://coveralls.io/repos/github/fetzerch/fritzcollectd/badge.svg?branch=master
+    :target: https://coveralls.io/github/fetzerch/fritzcollectd?branch=master
+    :alt: Coveralls Status
+
 fritzcollectd
 =============
 
