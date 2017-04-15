@@ -112,8 +112,7 @@ class FritzCollectd(object):
             raise IOError("fritzcollectd: Failed to connect to %s" %
                           self._fritz_address)
 
-        if len(self._fc.call_action('WANIPConnection',
-                                    'GetStatusInfo')) == 0:
+        if not self._fc.call_action('WANIPConnection', 'GetStatusInfo'):
             raise IOError("fritzcollectd: Statusinformation via UPnP is "
                           "not enabled")
 

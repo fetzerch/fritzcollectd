@@ -174,7 +174,7 @@ def test_basic(fc_class_mock):
     fc_class_mock.return_value = FritzConnectionMock()
 
     MOCK.process()
-    assert len(MOCK.values) > 0
+    assert MOCK.values
 
 
 @mock.patch('fritzconnection.FritzConnection', autospec=True)
@@ -192,7 +192,7 @@ def test_configuration(fc_class_mock):
         [mock.call(address='localhost', password='password',
                    port=1234, user='user')])
     assert MOCK.warning.called
-    assert len(MOCK.values) > 0
+    assert MOCK.values
     assert MOCK.values[0].host == 'hostname'
     assert MOCK.values[0].plugin_instance == 'instance'
 
@@ -238,7 +238,7 @@ def test_system_connection():
     """ System test: Read values of real router. """
     MOCK.process()
     print(MOCK.values)
-    assert len(MOCK.values) > 0
+    assert MOCK.values
 
 
 @nottest
