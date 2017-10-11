@@ -152,6 +152,39 @@ class FritzConnectionMock(object):  # pylint: disable=too-few-public-methods
         {'NewBytesSent': 23004321,
          'NewBytesReceived': 12045}
     }
+    FRITZBOX_DATA_INDEXED = {
+        ('X_AVM-DE_Homeauto:1', 'GetGenericDeviceInfos'):
+        [{'NewSwitchIsValid': 'VALID',
+          'NewMultimeterIsValid': 'VALID',
+          'NewTemperatureIsValid': 'VALID',
+          'NewDeviceId': 16,
+          'NewAIN': '08761 0114116',
+          'NewDeviceName': 'FRITZ!DECT 200 #1',
+          'NewTemperatureOffset': '0',
+          'NewSwitchLock': '0',
+          'NewProductName': 'FRITZ!DECT 200',
+          'NewPresent': 'CONNECTED',
+          'NewMultimeterPower': 1673,
+          'NewHkrComfortTemperature': '0',
+          'NewSwitchMode': 'AUTO',
+          'NewManufacturer': 'AVM',
+          'NewMultimeterIsEnabled': 'ENABLED',
+          'NewHkrIsTemperature': '0',
+          'NewFunctionBitMask': 2944,
+          'NewTemperatureIsEnabled': 'ENABLED',
+          'NewSwitchState': 'ON',
+          'NewSwitchIsEnabled': 'ENABLED',
+          'NewFirmwareVersion': '03.87',
+          'NewHkrSetVentilStatus': 'CLOSED',
+          'NewMultimeterEnergy': 5182,
+          'NewHkrComfortVentilStatus': 'CLOSED',
+          'NewHkrReduceTemperature': '0',
+          'NewHkrReduceVentilStatus': 'CLOSED',
+          'NewHkrIsEnabled': 'DISABLED',
+          'NewHkrSetTemperature': '0',
+          'NewTemperatureCelsius': '225',
+          'NewHkrIsValid': 'INVALID'}, {}]
+    }
 
     MODELNAME = 'FRITZ!Box 7490'
 
@@ -159,7 +192,11 @@ class FritzConnectionMock(object):  # pylint: disable=too-few-public-methods
         type(self).modelname = mock.PropertyMock(return_value=self.MODELNAME)
         self.call_action = mock.Mock(side_effect=self._side_effect_callaction)
 
-    def _side_effect_callaction(self, service, action):
+    def _side_effect_callaction(self, service, action, **kwargs):
+        if kwargs:
+            index = next(iter(kwargs.values()))
+            return self.FRITZBOX_DATA_INDEXED[(service, action)][index]
+
         return self.FRITZBOX_DATA[(service, action)]
 
 

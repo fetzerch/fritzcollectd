@@ -41,7 +41,10 @@ class FritzCollectd(object):
 
     PLUGIN_NAME = 'fritzbox'
 
-    ServiceAction = namedtuple('ServiceAction', ['service', 'action'])
+    ServiceAction = namedtuple(
+        'ServiceAction', ['service', 'action',
+                          'index_field', 'instance_field', 'instance_prefix'])
+    ServiceAction.__new__.__defaults__ = (None, None, None)
     Value = namedtuple('ServiceValue', ['value_instance', 'value_type'])
 
     # Services/Actions/Arguments that are read from the router.
@@ -67,13 +70,23 @@ class FritzCollectd(object):
         (ServiceAction('LANEthernetInterfaceConfig', 'GetStatistics'),
          {'NewBytesSent': Value('lan_totalbytessent', 'bytes'),
           'NewBytesReceived': Value('lan_totalbytesreceived', 'bytes')}),
+        (ServiceAction('X_AVM-DE_Homeauto:1', 'GetGenericDeviceInfos',
+                       'NewIndex', 'NewIndex', 'dect'),
+         {'NewMultimeterPower': Value('power', 'power'),
+          'NewMultimeterEnergy': Value('energy', 'power'),
+          'NewTemperatureCelsius': Value('temperature', 'temperature'),
+          'NewSwitchState': Value('switchstate', 'gauge')}),
     ])
 
     CONVERSION = {
         'NewPhysicalLinkStatus': lambda x: 1 if x == 'Up' else 0,
         'NewConnectionStatus': lambda x: 1 if x == 'Connected' else 0,
         'NewByteSendRate': lambda x: 8 * x,
-        'NewByteReceiveRate': lambda x: 8 * x
+        'NewByteReceiveRate': lambda x: 8 * x,
+        'NewTemperatureCelsius': lambda x: float(x) / 10,
+        'NewSwitchState': lambda x: 1 if x == 'ON' else 0,
+        'NewMultimeterEnergy': lambda x: float(x) / 1000,
+        'NewMultimeterPower': lambda x: float(x) / 100
     }
 
     def __init__(self,  # pylint: disable=too-many-arguments
@@ -96,12 +109,13 @@ class FritzCollectd(object):
         self._fc = None
         self._fc_auth = None
 
-    def _dispatch_value(self, value_type, value_instance, value):
+    def _dispatch_value(self, plugin_instance,
+                        value_type, value_instance, value):
         """ Dispatch value to collectd """
         val = collectd.Values()
         val.host = self._fritz_hostname
         val.plugin = self.PLUGIN_NAME
-        val.plugin_instance = self._plugin_instance
+        val.plugin_instance = plugin_instance
         val.type = value_type
         val.type_instance = value_instance
         val.values = [value]
@@ -146,12 +160,12 @@ class FritzCollectd(object):
     def read(self):
         """ Read and dispatch """
         values = self._read_data(self.SERVICE_ACTIONS, self._fc)
-        for value_instance, (value_type, value) in values.items():
-            self._dispatch_value(value_type, value_instance, value)
+        for (instance, value_instance), (value_type, value) in values.items():
+            self._dispatch_value(instance, value_type, value_instance, value)
 
         values = self._read_data(self.SERVICE_ACTIONS_AUTH, self._fc_auth)
-        for value_instance, (value_type, value) in values.items():
-            self._dispatch_value(value_type, value_instance, value)
+        for (instance, value_instance), (value_type, value) in values.items():
+            self._dispatch_value(instance, value_type, value_instance, value)
 
     def _read_data(self, service_actions, connection):
         """ Read data from the FRITZ!Box
@@ -166,25 +180,51 @@ class FritzCollectd(object):
         if connection is None:
             return {}
 
-        # Construct a dict: {value_instance: (value_type, value)} from the
+        # Construct a dict:
+        # {(plugin_instance, value_instance): (value_type, value)} from the
         # queried results and applies a value conversion (if defined)
         values = {}
         for service_action in service_actions:
-            readings = connection.call_action(service_action.service,
-                                              service_action.action)
-            if self._verbose:
-                collectd.info("fritzcollectd: Calling action: {} {}".format(
-                    service_action.service, service_action.action))
+            index = 0
+            while True:
+                parameters = {service_action.index_field: index} \
+                             if service_action.index_field else {}
+                if self._verbose:
+                    collectd.info("fritzcollectd: Calling action: "
+                                  "{} {} {}".format(service_action.service,
+                                                    service_action.action,
+                                                    parameters))
+                readings = connection.call_action(
+                    service_action.service, service_action.action,
+                    **parameters)
+                if not readings:
+                    if self._verbose:
+                        collectd.info("fritzcollectd: No readings received")
+                    break
 
-            values.update({
-                value.value_instance: (
-                    value.value_type,
-                    self.CONVERSION.get(action_argument, lambda x: x)(
-                        readings[action_argument])
-                )
-                for (action_argument, value)
-                in service_actions[service_action].items()
-            })
+                plugin_instance = [self._plugin_instance]
+                if service_action.instance_field:
+                    readings.update(parameters)
+                    plugin_instance.append('{}{}'.format(
+                        service_action.instance_prefix,
+                        readings[service_action.instance_field]
+                    ))
+                plugin_instance = '-'.join(filter(None, plugin_instance))
+
+                values.update({
+                    (plugin_instance, value.value_instance): (
+                        value.value_type,
+                        self.CONVERSION.get(action_argument, lambda x: x)(
+                            readings[action_argument])
+                    )
+                    for (action_argument, value)
+                    in service_actions[service_action].items()
+                })
+
+                if not service_action.index_field:
+                    break
+                index += 1
+
         return values
 
 

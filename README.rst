@@ -12,7 +12,7 @@ fritzcollectd
 A `collectd <http://collectd.org>`__ plugin for monitoring AVM FRITZ!Box
 routers.
 
-Data captured includes:
+Data captured for the FRITZ!Box includes:
 
 * Physical link status
 * Connection status
@@ -21,6 +21,13 @@ Data captured includes:
 * Current bit rates
 * Total bytes sent and received
 * Total bytes send and received on LAN interface (requires Authentication)
+
+Data captured for connected FRITZ!DECT devices:
+
+* Temperature
+* Switch status
+* Current power
+* Energy consumption
 
 Dependencies
 ------------
