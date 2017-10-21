@@ -109,10 +109,12 @@ class FritzCollectd(object):
             address=self._fritz_address, port=self._fritz_port,
             user=self._fritz_user)
         if self._fc.modelname is None:
+            self._fc = None
             raise IOError("fritzcollectd: Failed to connect to %s" %
                           self._fritz_address)
 
         if not self._fc.call_action('WANIPConnection', 'GetStatusInfo'):
+            self._fc = None
             raise IOError("fritzcollectd: Statusinformation via UPnP is "
                           "not enabled")
 
@@ -124,6 +126,8 @@ class FritzCollectd(object):
                 self._fc_auth.call_action('WANIPConnection',
                                           'GetStatusInfo')
             except XMLSyntaxError:
+                self._fc = None
+                self._fc_auth = None
                 raise IOError("fritzcollectd: Incorrect password")
 
     def read(self):
