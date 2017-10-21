@@ -129,6 +129,9 @@ class FritzCollectd(object):
                 self._fc = None
                 self._fc_auth = None
                 raise IOError("fritzcollectd: Incorrect password")
+        else:
+            collectd.info("fritzcollectd: No password configured, "
+                          "some values cannot be queried")
 
     def read(self):
         """ Read and dispatch """

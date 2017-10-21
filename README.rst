@@ -20,6 +20,7 @@ Data captured includes:
 * Maximal bit rates
 * Current bit rates
 * Total bytes sent and received
+* Total bytes send and received on LAN interface (requires Authentication)
 
 Dependencies
 ------------
@@ -66,7 +67,9 @@ Add the following to your collectd config (typically ``/etc/collectd.conf``):
 
 The plugin recognizes several (optional) configuration parameters. In most
 cases the plugin works without any of these parameters. It might be necessary
-to specify `Address` if the router's host name has been changed.
+to specify `Address` if the router's host name has been changed. Some values
+require authentication and can only be queried if the router's `Password` has
+been configured.
 
 * Address: The network address of the FRITZ!Box.
 * Port: The TCP port of the FRITZ!Box.

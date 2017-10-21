@@ -43,11 +43,13 @@ class CollectdMock(object):
         self._cb_read = None
         self._cb_shutdown = None
         self.values = []
+        self.info = mock.Mock()
         self.warning = mock.Mock()
 
     def reset_mock(self):
         """ Reset values and mock calls. Must be called for every test. """
         del self.values[:]
+        self.info.reset_mock()
         self.warning.reset_mock()
 
     def register_config(self, cb_config):
