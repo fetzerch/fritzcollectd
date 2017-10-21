@@ -186,7 +186,7 @@ def test_configuration(fc_class_mock):
     config = CollectdConfig({'Address': 'localhost', 'Port': 1234,
                              'User': 'user', 'Password': 'password',
                              'Hostname': 'hostname', 'Instance': 'instance',
-                             'UNKNOWN': 'UNKNOWN'})
+                             'Verbose': 'False', 'UNKNOWN': 'UNKNOWN'})
     fc_class_mock.return_value = FritzConnectionMock()
 
     MOCK.process(config)
@@ -197,6 +197,18 @@ def test_configuration(fc_class_mock):
     assert MOCK.values
     assert MOCK.values[0].host == 'hostname'
     assert MOCK.values[0].plugin_instance == 'instance'
+
+
+@mock.patch('fritzconnection.FritzConnection', autospec=True)
+@with_setup(teardown=MOCK.reset_mock)
+def test_configuration_verbose(fc_class_mock):
+    """ Test if the verbose setting causes info messages to appear. """
+    config = CollectdConfig({'Password': 'password', 'Verbose': 'True'})
+    fc_class_mock.return_value = FritzConnectionMock()
+
+    MOCK.process(config)
+    assert MOCK.info.called
+    assert MOCK.values
 
 
 @mock.patch('fritzconnection.FritzConnection', autospec=True)

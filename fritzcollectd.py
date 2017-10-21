@@ -82,13 +82,17 @@ class FritzCollectd(object):
                  user=fritzconnection.fritzconnection.FRITZ_USERNAME,
                  password='',
                  hostname='',
-                 plugin_instance=''):
+                 plugin_instance='',
+                 verbose=''):
         self._fritz_address = address
         self._fritz_port = port
         self._fritz_user = user
         self._fritz_password = password
         self._fritz_hostname = hostname
         self._plugin_instance = plugin_instance
+        self._verbose = True if verbose.lower() in ['true', 'yes'] else False
+        if self._verbose:
+            collectd.info("fritzcollectd: Verbose logging enabled")
         self._fc = None
         self._fc_auth = None
 
@@ -101,6 +105,12 @@ class FritzCollectd(object):
         val.type = value_type
         val.type_instance = value_instance
         val.values = [value]
+        if self._verbose:
+            collectd.info("fritzcollectd: Dispatching: host: '{}', "
+                          "plugin: '{}', plugin_instance: '{}', type: '{}', "
+                          "type_instance: '{}', values: '{}'".format(
+                              val.host, val.plugin, val.plugin_instance,
+                              val.type, val.type_instance, val.values))
         val.dispatch()
 
     def init(self):
@@ -143,8 +153,7 @@ class FritzCollectd(object):
         for value_instance, (value_type, value) in values.items():
             self._dispatch_value(value_type, value_instance, value)
 
-    @classmethod
-    def _read_data(cls, service_actions, connection):
+    def _read_data(self, service_actions, connection):
         """ Read data from the FRITZ!Box
 
             The data is read from all services & actions defined in
@@ -163,10 +172,14 @@ class FritzCollectd(object):
         for service_action in service_actions:
             readings = connection.call_action(service_action.service,
                                               service_action.action)
+            if self._verbose:
+                collectd.info("fritzcollectd: Calling action: {} {}".format(
+                    service_action.service, service_action.action))
+
             values.update({
                 value.value_instance: (
                     value.value_type,
-                    cls.CONVERSION.get(action_argument, lambda x: x)(
+                    self.CONVERSION.get(action_argument, lambda x: x)(
                         readings[action_argument])
                 )
                 for (action_argument, value)
@@ -191,6 +204,8 @@ def callback_configure(config):
             params['hostname'] = node.values[0]
         elif node.key == 'Instance':
             params['plugin_instance'] = node.values[0]
+        elif node.key == 'Verbose':
+            params['verbose'] = node.values[0]
         else:
             collectd.warning('fritzcollectd: Unknown config %s' % node.key)
     CONFIGS.append(FritzCollectd(**params))

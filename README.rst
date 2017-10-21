@@ -62,6 +62,7 @@ Add the following to your collectd config (typically ``/etc/collectd.conf``):
         #    Password "pass"
         #    Hostname "FritzBox"
         #    Instance "1"
+        #    Verbose "False"
         #</Module>
     </Plugin>
 
@@ -78,6 +79,7 @@ been configured.
 * Instance: Plugin instance that collectd associates with the data.
 * Hostname: Hostname that collectd associates with the data (defaults to the
   host executing this plugin)
+* Verbose: Enable verbose logging to ease debugging.
 
 The module block can be repeated to monitor multiple routers.
 
