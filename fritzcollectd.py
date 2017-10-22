@@ -211,7 +211,7 @@ class FritzCollectd(object):
                     ))
                 plugin_instance = '-'.join(filter(None, plugin_instance))
 
-                values.update({
+                values.update({  # pragma: no branch
                     (plugin_instance, value.value_instance): (
                         value.value_type,
                         self.CONVERSION.get(action_argument, lambda x: x)(
