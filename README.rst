@@ -1,6 +1,6 @@
-.. image:: https://circleci.com/gh/fetzerch/fritzcollectd.svg?style=shield
-    :target: https://circleci.com/gh/fetzerch/fritzcollectd
-    :alt: Circle CI Status
+.. image:: https://travis-ci.org/fetzerch/fritzcollectd.svg?branch=master
+    :target: https://travis-ci.org/fetzerch/fritzcollectd
+    :alt: Travis CI Status
 
 .. image:: https://coveralls.io/repos/github/fetzerch/fritzcollectd/badge.svg?branch=master
     :target: https://coveralls.io/github/fetzerch/fritzcollectd?branch=master
