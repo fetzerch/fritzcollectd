@@ -2,10 +2,11 @@ image: python:3.5
 
 cache:
   paths:
-    - /root/.cache
+    - .pip
+    - .tox
 
 before_script:
-  - pip install tox
+  - pip --cache-dir=.pip install tox
 
 flake8:
   script:
