@@ -23,10 +23,11 @@
 
 from collections import namedtuple, OrderedDict
 
-import collectd  # pylint: disable=import-error
 import fritzconnection
 
 from lxml.etree import XMLSyntaxError  # pylint: disable=no-name-in-module
+
+import collectd  # pylint: disable=import-error
 
 __version__ = '0.5.0'
 
