@@ -261,7 +261,12 @@ def callback_init():
 def callback_read():
     """ Read callback """
     for config in CONFIGS:
-        config.read()
+        try:
+            config.read()
+        except XMLSyntaxError:
+            collectd.warning('fritzcollectd: Invalid data received, '
+                             'attempting to reconnect')
+            config.init()
 
 
 def callback_shutdown():

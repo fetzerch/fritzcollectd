@@ -281,6 +281,16 @@ def test_incorrect_password(fc_class_mock):
     MOCK.process(CollectdConfig({'Password': 'incorrect'}))
 
 
+@mock.patch('fritzconnection.FritzConnection', autospec=True)
+@with_setup(teardown=MOCK.reset_mock)
+def test_xmlsyntaxerror_in_read(fc_class_mock):
+    """ Simulate an XMLSyntaxError exception when reading data. """
+    fc_mock = FritzConnectionMock()
+    fc_class_mock.return_value = fc_mock
+    fc_mock.call_action.side_effect = [{0}, XMLSyntaxError(0, 0, 0, 0), {0}]
+    MOCK.process()
+
+
 # System tests that try to interact with a real hardware device.
 
 @nottest
