@@ -136,19 +136,19 @@ class FritzConnectionMock(object):  # pylint: disable=too-few-public-methods
         to support the normal (good case) tests. """
 
     FRITZBOX_DATA = {
-        ('WANIPConnection', 'GetStatusInfo'):
+        ('WANIPConnection:1', 'GetStatusInfo'):
         {'NewConnectionStatus': 'Connected',
          'NewUptime': 35307},
-        ('WANCommonInterfaceConfig', 'GetCommonLinkProperties'):
+        ('WANCommonInterfaceConfig:1', 'GetCommonLinkProperties'):
         {'NewLayer1DownstreamMaxBitRate': 10087000,
          'NewLayer1UpstreamMaxBitRate': 2105000,
          'NewPhysicalLinkStatus': 'Up'},
-        ('WANCommonInterfaceConfig', 'GetAddonInfos'):
+        ('WANCommonInterfaceConfig:1', 'GetAddonInfos'):
         {'NewByteSendRate': 3438,
          'NewByteReceiveRate': 67649,
          'NewTotalBytesSent': 1712232562,
          'NewTotalBytesReceived': 5221019883},
-        ('LANEthernetInterfaceConfig', 'GetStatistics'):
+        ('LANEthernetInterfaceConfig:1', 'GetStatistics'):
         {'NewBytesSent': 23004321,
          'NewBytesReceived': 12045}
     }

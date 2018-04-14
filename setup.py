@@ -50,6 +50,6 @@ setup(
     ],
     keywords='AVM FritzBox collectd',
     install_requires=[
-        'fritzconnection'
+        'fritzconnection>=0.6.0'
     ],
 )

@@ -52,14 +52,15 @@ class FritzCollectd(object):
     # dict: {(service, service_action):
     #           {action_argument: (value_instance, value_type)}}
     SERVICE_ACTIONS = OrderedDict([
-        (ServiceAction('WANIPConnection', 'GetStatusInfo'),
+        (ServiceAction('WANIPConnection:1', 'GetStatusInfo'),
          {'NewConnectionStatus': Value('constatus', 'gauge'),
           'NewUptime': Value('uptime', 'uptime')}),
-        (ServiceAction('WANCommonInterfaceConfig', 'GetCommonLinkProperties'),
+        (ServiceAction('WANCommonInterfaceConfig:1',
+                       'GetCommonLinkProperties'),
          {'NewPhysicalLinkStatus': Value('dslstatus', 'gauge'),
           'NewLayer1DownstreamMaxBitRate': Value('downstreammax', 'bitrate'),
           'NewLayer1UpstreamMaxBitRate': Value('upstreammax', 'bitrate')}),
-        (ServiceAction('WANCommonInterfaceConfig', 'GetAddonInfos'),
+        (ServiceAction('WANCommonInterfaceConfig:1', 'GetAddonInfos'),
          {'NewByteSendRate': Value('sendrate', 'bitrate'),
           'NewByteReceiveRate': Value('receiverate', 'bitrate'),
           'NewTotalBytesSent': Value('totalbytessent', 'bytes'),
@@ -68,7 +69,7 @@ class FritzCollectd(object):
 
     # Services/Actions that require authentication with password
     SERVICE_ACTIONS_AUTH = OrderedDict([
-        (ServiceAction('LANEthernetInterfaceConfig', 'GetStatistics'),
+        (ServiceAction('LANEthernetInterfaceConfig:1', 'GetStatistics'),
          {'NewBytesSent': Value('lan_totalbytessent', 'bytes'),
           'NewBytesReceived': Value('lan_totalbytesreceived', 'bytes')}),
         (ServiceAction('X_AVM-DE_Homeauto:1', 'GetGenericDeviceInfos',
@@ -138,7 +139,7 @@ class FritzCollectd(object):
             raise IOError("fritzcollectd: Failed to connect to %s" %
                           self._fritz_address)
 
-        if not self._fc.call_action('WANIPConnection', 'GetStatusInfo'):
+        if not self._fc.call_action('WANIPConnection:1', 'GetStatusInfo'):
             self._fc = None
             raise IOError("fritzcollectd: Statusinformation via UPnP is "
                           "not enabled")
@@ -148,7 +149,7 @@ class FritzCollectd(object):
                 address=self._fritz_address, port=self._fritz_port,
                 user=self._fritz_user, password=self._fritz_password)
             try:
-                self._fc_auth.call_action('WANIPConnection',
+                self._fc_auth.call_action('WANIPConnection:1',
                                           'GetStatusInfo')
             except XMLSyntaxError:
                 self._fc = None
