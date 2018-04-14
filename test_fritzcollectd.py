@@ -191,6 +191,8 @@ class FritzConnectionMock(object):  # pylint: disable=too-few-public-methods
     def __init__(self):
         type(self).modelname = mock.PropertyMock(return_value=self.MODELNAME)
         self.call_action = mock.Mock(side_effect=self._side_effect_callaction)
+        type(self).actionnames = mock.PropertyMock(
+            side_effect=self._side_effect_actionnames)
 
     def _side_effect_callaction(self, service, action, **kwargs):
         if kwargs:
@@ -198,6 +200,10 @@ class FritzConnectionMock(object):  # pylint: disable=too-few-public-methods
             return self.FRITZBOX_DATA_INDEXED[(service, action)][index]
 
         return self.FRITZBOX_DATA[(service, action)]
+
+    def _side_effect_actionnames(self):
+        return list(self.FRITZBOX_DATA.keys()) \
+            + list(self.FRITZBOX_DATA_INDEXED.keys())
 
 
 # Instantiate mock so that tests can be executed without collectd.
@@ -234,6 +240,18 @@ def test_configuration(fc_class_mock):
     assert MOCK.values
     assert MOCK.values[0].host == 'hostname'
     assert MOCK.values[0].plugin_instance == 'instance'
+
+
+@mock.patch('fritzconnection.FritzConnection', autospec=True)
+@with_setup(teardown=MOCK.reset_mock)
+def test_unsupported_service(fc_class_mock):
+    """ Ensure unsupported service actions cause no issues. """
+    config = CollectdConfig({'Password': 'password', 'Verbose': 'True'})
+    fc_mock = FritzConnectionMock()
+    del fc_mock.FRITZBOX_DATA[
+        ('LANEthernetInterfaceConfig:1', 'GetStatistics')]
+    fc_class_mock.return_value = fc_mock
+    MOCK.process(config)
 
 
 @mock.patch('fritzconnection.FritzConnection', autospec=True)

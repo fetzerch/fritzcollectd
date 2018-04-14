@@ -144,6 +144,9 @@ class FritzCollectd(object):
             raise IOError("fritzcollectd: Statusinformation via UPnP is "
                           "not enabled")
 
+        self._filter_service_actions(self.SERVICE_ACTIONS,
+                                     self._fc.actionnames)
+
         if self._fritz_password != '':
             self._fc_auth = fritzconnection.FritzConnection(
                 address=self._fritz_address, port=self._fritz_port,
@@ -151,6 +154,9 @@ class FritzCollectd(object):
             try:
                 self._fc_auth.call_action('WANIPConnection:1',
                                           'GetStatusInfo')
+
+                self._filter_service_actions(self.SERVICE_ACTIONS_AUTH,
+                                             self._fc_auth.actionnames)
             except XMLSyntaxError:
                 self._fc = None
                 self._fc_auth = None
@@ -158,6 +164,17 @@ class FritzCollectd(object):
         else:
             collectd.info("fritzcollectd: No password configured, "
                           "some values cannot be queried")
+
+    @classmethod
+    def _filter_service_actions(cls, service_actions, actionnames):
+        """ Remove unsupported service actions """
+        for service_action in list(service_actions.keys()):
+            if ((service_action.service, service_action.action)
+                    not in actionnames):
+                collectd.info("fritzcollectd: Skipping unsupported service "
+                              "action: {} {}".format(service_action.service,
+                                                     service_action.action))
+                del service_actions[service_action]
 
     def read(self):
         """ Read and dispatch """
