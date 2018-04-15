@@ -29,7 +29,7 @@ from lxml.etree import XMLSyntaxError  # pylint: disable=no-name-in-module
 
 import collectd  # pylint: disable=import-error
 
-__version__ = '0.5.0'
+__version__ = '0.6.0'
 
 
 CONFIGS = []
