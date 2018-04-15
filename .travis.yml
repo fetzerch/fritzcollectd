@@ -13,3 +13,10 @@ matrix:
       env: TOXENV=py35
 script: tox
 after_success: coveralls
+deploy:
+  provider: pypi
+  user: fetzerch
+  password:
+    secure: ONYux04yrsOamiJI4iNWwEFYPqLYDO7TBup2rIVkCiIfKURGVCzyHabeXC7flNLt5//d7m48kEKJ0tousVpNA/ULB+2oPTl88Vjmriy06KcGIG9hj3KIuaR6LLI1SrohxwK50IA5yYP0eW+3WB3a5+iTdt+LlIvYWrq5xSd6UmXG267tYfffC/4ugfS4uK84FC0q45zcgR8xvJYJJ0ujH1zjDaaq0+uCUXDs8YZI7IfkuR6l+v+GuvSexm7dm2GBuVCVRp2MBxP6M2W5H9m3NT5JSjFyGuvnePqGzgEYgiPRSc5e7JDVLoH6dg/+zCJLmxMHRpWOVteZ5aBf2xfgMHHdhbvWzsu/hZhdj9JIjMlfHVokCjB1UHlppbtqXTjFBBI54alw/UFCCUk2OEV35Z3av1K+oKQvRiLhDPFi6vJujRNM8r446fIHKGQ+jOV5Q8d8FnhyFoY0FTibX+DrL9DnpGPyYvX6oCDtJyKQsp+bg5otr5+2lOs3LCsuJ3/mQZhrGb1QucFlUeMLnKjF536daXr3nUM3+eXvUTHdNBoB8YiIkTFZyTeg6jgsIzMqZpz11Ab8MW2ezUYzAAn1A/kwApKrF2qPFBdGsNUZr9P9OxetpmaaR29ul25ix18VoADhzUvEwSnIUu4FEWj7MnMMU98X3GXiDwnG2cmOZ+M=
+  on:
+    tags: true
