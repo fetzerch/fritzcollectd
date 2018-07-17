@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# pylint: disable=useless-object-inheritance
+
 """ fritzcollectd - FRITZ!Box collectd plugin """
 
 from collections import namedtuple, OrderedDict

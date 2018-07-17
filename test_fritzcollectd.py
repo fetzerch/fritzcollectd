@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# pylint: disable=useless-object-inheritance
+
 """ Tests for fritzcollectd """
 
 from __future__ import print_function
