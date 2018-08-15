@@ -71,6 +71,8 @@ class FritzCollectd(object):
 
     # Services/Actions that require authentication with password
     SERVICE_ACTIONS_AUTH = OrderedDict([
+        (ServiceAction('DeviceInfo:1', 'GetInfo'),
+         {'NewUpTime': Value('boxuptime', 'uptime')}),
         (ServiceAction('LANEthernetInterfaceConfig:1', 'GetStatistics'),
          {'NewBytesSent': Value('lan_totalbytessent', 'bytes'),
           'NewBytesReceived': Value('lan_totalbytesreceived', 'bytes')}),
