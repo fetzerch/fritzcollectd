@@ -82,6 +82,9 @@ class FritzCollectd(object):
           'NewMultimeterEnergy': Value('energy', 'power'),
           'NewTemperatureCelsius': Value('temperature', 'temperature'),
           'NewSwitchState': Value('switchstate', 'gauge')}),
+        (ServiceAction('DeviceInfo:1', 'GetInfo'),
+         {'NewUpTime': Value('boxuptime', 'uptime')}),
+        
     ])
 
     CONVERSION = {
