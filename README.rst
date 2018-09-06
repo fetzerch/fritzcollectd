@@ -20,9 +20,10 @@ Data captured for the FRITZ!Box includes:
 * Maximal bit rates
 * Current bit rates
 * Total bytes sent and received
-* Total bytes send and received on LAN interface (requires Authentication)
+* Total bytes send and received on LAN interface (requires authentication)
+* Router uptime (requires authentication)
 
-Data captured for connected FRITZ!DECT devices:
+Data captured for connected FRITZ!DECT devices (requires authentication):
 
 * Temperature
 * Switch status
@@ -44,10 +45,16 @@ Installation
 Prerequisites
 -------------
 
-In order to be able to read the status information the option "Transmit status
-information over UPnP" has to be enabled in the "Network Settings" menu on the
-Fritz!BOX. This is exaplained in `AVM's Knowledge Base
-<https://en.avm.de/service/fritzbox/fritzbox-7490/knowledge-base/publication/show/894_Setting-up-automatic-port-sharing-via-UPnP/>`_.
+In order to be able to read the status information the option `"Transmit status
+information over UPnP" <https://en.avm.de/service/fritzbox/fritzbox-7490/knowledge-base/publication/show/894_Setting-up-automatic-port-sharing-via-UPnP/>`_
+has to be enabled in the "Network Settings" menu on the Fritz!BOX.
+
+For reading values that are marked with *requires authentication* in the
+introduction section, the option "Allow access for applications" (also in
+"Network Settings") has to be enabled as well. If desired a separate user
+account can be created for gathering statistics in `"FRITZ!Box Users" in the
+"System" menu <https://en.avm.de/service/fritzbox/fritzbox-4020/knowledge-base/publication/show/1522_Accessing-FRITZ-Box-from-the-home-network-with-user-accounts/>`_.
+The account needs to have the "FRITZ!Box Settings" permission.
 
 Configuration
 -------------
@@ -75,9 +82,10 @@ Add the following to your collectd config (typically ``/etc/collectd.conf``):
 
 The plugin recognizes several (optional) configuration parameters. In most
 cases the plugin works without any of these parameters. It might be necessary
-to specify `Address` if the router's host name has been changed. Some values
-require authentication and can only be queried if the router's `Password` has
-been configured.
+to specify `Address` if the router's host name has been changed. The values
+in the introduction section that are marked with *requires authentication*
+can only be queried if the router's `Password` has been configured (see also
+the prerequisites section).
 
 * Address: The network address of the FRITZ!Box.
 * Port: The TCP port of the FRITZ!Box.
