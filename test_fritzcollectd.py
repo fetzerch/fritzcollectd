@@ -196,6 +196,20 @@ class FritzConnectionMock(object):  # pylint: disable=too-few-public-methods
         type(self).actionnames = mock.PropertyMock(
             side_effect=self._side_effect_actionnames)
 
+        # The production code uses two FritzConnection instances, one without
+        # and one with authentication. The one with authentication supports
+        # more services. As there's currently no easy way to differenciate
+        # them in tests, we rely on the order of the services() calls.
+        services = {
+            srv: None for srv, _ in list(self.FRITZBOX_DATA.keys())
+        }
+        auth_services = services.copy()
+        auth_services.update({
+            srv: None for srv, _ in list(self.FRITZBOX_DATA_INDEXED.keys())
+        })
+        type(self).services = mock.PropertyMock(
+            side_effect=[auth_services, services])
+
     def _side_effect_callaction(self, service, action, **kwargs):
         if kwargs:
             index = next(iter(kwargs.values()))
@@ -282,8 +296,19 @@ def test_connection_error(fc_class_mock):
 @mock.patch('fritzconnection.FritzConnection', autospec=True)
 @with_setup(teardown=MOCK.reset_mock)
 @raises(IOError)
+def test_application_access_disabled(fc_class_mock):
+    """ Simulate that access for applications is deactivated on router. """
+    fc_mock = FritzConnectionMock()
+    fc_class_mock.return_value = fc_mock
+    type(fc_mock).services = mock.PropertyMock(return_value={})
+    MOCK.process(CollectdConfig({'Password': 'password'}))
+
+
+@mock.patch('fritzconnection.FritzConnection', autospec=True)
+@with_setup(teardown=MOCK.reset_mock)
+@raises(IOError)
 def test_upnp_status_disabled(fc_class_mock):
-    """ Simulate that UPnP status is deactivated on router.  """
+    """ Simulate that UPnP status is deactivated on router. """
     fc_mock = FritzConnectionMock()
     fc_class_mock.return_value = fc_mock
     fc_mock.call_action.side_effect = [{}]

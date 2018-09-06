@@ -31,7 +31,7 @@ from lxml.etree import XMLSyntaxError  # pylint: disable=no-name-in-module
 
 import collectd  # pylint: disable=import-error
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 
 
 CONFIGS = []
@@ -155,6 +155,13 @@ class FritzCollectd(object):
             self._fc_auth = fritzconnection.FritzConnection(
                 address=self._fritz_address, port=self._fritz_port,
                 user=self._fritz_user, password=self._fritz_password)
+
+            # If the 'Allow access for applications' option is disabled,
+            # the connection behaves as if it was created without password.
+            if self._fc.services.keys() == self._fc_auth.services.keys():
+                raise IOError("fritzcollectd: Allow access for applications "
+                              "is not enabled")
+
             try:
                 self._fc_auth.call_action('WANIPConnection:1',
                                           'GetStatusInfo')
@@ -164,7 +171,8 @@ class FritzCollectd(object):
             except XMLSyntaxError:
                 self._fc = None
                 self._fc_auth = None
-                raise IOError("fritzcollectd: Incorrect password")
+                raise IOError("fritzcollectd: Incorrect password or "
+                              "'FRITZ!Box Settings' rights for user disabled")
         else:
             collectd.info("fritzcollectd: No password configured, "
                           "some values cannot be queried")
