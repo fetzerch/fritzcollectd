@@ -26,12 +26,13 @@
 from collections import namedtuple, OrderedDict
 
 import fritzconnection
+import pbr.version
 
 from lxml.etree import XMLSyntaxError  # pylint: disable=no-name-in-module
 
 import collectd  # pylint: disable=import-error
 
-__version__ = '0.6.1'
+__version__ = pbr.version.VersionInfo('fritzcollectd').release_string()
 
 
 CONFIGS = []
