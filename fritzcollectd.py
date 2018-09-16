@@ -54,14 +54,19 @@ class FritzCollectd(object):
     # dict: {(service, service_action):
     #           {action_argument: (value_instance, value_type)}}
     SERVICE_ACTIONS = OrderedDict([
+        # Returns an empty dict if called on the authenticated connection.
         (ServiceAction('WANIPConnection:1', 'GetStatusInfo'),
          {'NewConnectionStatus': Value('constatus', 'gauge'),
           'NewUptime': Value('uptime', 'uptime')}),
+        # Returns maximal possible bit rates on the line if called on the
+        # authenticated connection.
         (ServiceAction('WANCommonInterfaceConfig:1',
                        'GetCommonLinkProperties'),
          {'NewPhysicalLinkStatus': Value('dslstatus', 'gauge'),
           'NewLayer1DownstreamMaxBitRate': Value('downstreammax', 'bitrate'),
           'NewLayer1UpstreamMaxBitRate': Value('upstreammax', 'bitrate')}),
+        # Throws 'ActionError: Unknown Action: GetAddonInfos' on the
+        # authenticated connection.
         (ServiceAction('WANCommonInterfaceConfig:1', 'GetAddonInfos'),
          {'NewByteSendRate': Value('sendrate', 'bitrate'),
           'NewByteReceiveRate': Value('receiverate', 'bitrate'),
