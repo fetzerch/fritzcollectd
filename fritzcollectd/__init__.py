@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# pylint: disable=useless-object-inheritance
+# pylint: disable=bad-option-value,useless-object-inheritance
 
 """ fritzcollectd - FRITZ!Box collectd plugin """
 

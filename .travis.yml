@@ -5,19 +5,17 @@ script: tox
 jobs:
   include:
     - python: 3.5
-      env: TOXENV=flake8
-    - python: 3.5
-      env: TOXENV=pylint
+      env: TOXENV=py35
+    - python: 3.6
+      env: TOXENV=py36
+      install: pip install tox coveralls
+      after_success: coveralls
     - python: 2.7
       env: TOXENV=py27
       install: pip install tox coveralls
       after_success: coveralls
-    - python: 3.5
-      env: TOXENV=py35
-      install: pip install tox coveralls
-      after_success: coveralls
     - stage: deploy
-      python: 3.5
+      python: 3.6
       install: skip
       script: skip
       deploy:

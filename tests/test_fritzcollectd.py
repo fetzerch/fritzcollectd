@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# pylint: disable=useless-object-inheritance
+# pylint: disable=bad-option-value,useless-object-inheritance
 
 """ Tests for fritzcollectd """
 
@@ -28,10 +28,14 @@ from __future__ import print_function
 import collections
 import sys
 
-import mock
+try:
+    import mock
+except ImportError:
+    from unittest import mock
+
+import pytest
 
 from lxml.etree import XMLSyntaxError  # pylint: disable=no-name-in-module
-from nose.tools import raises, nottest, with_setup
 
 
 class CollectdMock(object):
@@ -40,8 +44,8 @@ class CollectdMock(object):
         independently from collectd. """
 
     def __init__(self):
-        self._cb_init = None
         self._cb_config = None
+        self._cb_init = None
         self._cb_read = None
         self._cb_shutdown = None
         self.values = []
@@ -228,27 +232,38 @@ sys.modules['collectd'] = MOCK
 import fritzcollectd  # noqa, pylint: disable=unused-import, wrong-import-position
 
 
-@mock.patch('fritzconnection.FritzConnection', autospec=True)
-@with_setup(teardown=MOCK.reset_mock)
-def test_basic(fc_class_mock):
-    """ Basic test with default configuration. """
-    fc_class_mock.return_value = FritzConnectionMock()
+# pylint: disable=redefined-outer-name
 
+@pytest.fixture(autouse=True)
+def reset_mock():
+    """Fixture that resets the CollectdMock after each testcase."""
+    yield
+    MOCK.reset_mock()
+
+
+@pytest.fixture()
+def fc_class_mock(mocker):
+    """Fixture that sets up a mocked FritzConnection class."""
+    result = mocker.patch('fritzconnection.FritzConnection', autospec=True)
+    result.return_value = FritzConnectionMock()
+    yield result
+
+
+@pytest.mark.usefixtures('fc_class_mock')
+def test_basic():
+    """ Basic test with default configuration. """
     MOCK.process()
     assert MOCK.values
 
 
-@mock.patch('fritzconnection.FritzConnection', autospec=True)
-@with_setup(teardown=MOCK.reset_mock)
 def test_configuration(fc_class_mock):
     """ Test if configuration parameters have the intended behavior. """
     config = CollectdConfig({'Address': 'localhost', 'Port': 1234,
                              'User': 'user', 'Password': 'password',
                              'Hostname': 'hostname', 'Instance': 'instance',
                              'Verbose': 'False', 'UNKNOWN': 'UNKNOWN'})
-    fc_class_mock.return_value = FritzConnectionMock()
-
     MOCK.process(config)
+
     fc_class_mock.assert_has_calls(
         [mock.call(address='localhost', password='password',
                    port=1234, user='user')])
@@ -258,76 +273,61 @@ def test_configuration(fc_class_mock):
     assert MOCK.values[0].plugin_instance == 'instance'
 
 
-@mock.patch('fritzconnection.FritzConnection', autospec=True)
-@with_setup(teardown=MOCK.reset_mock)
 def test_unsupported_service(fc_class_mock):
     """ Ensure unsupported service actions cause no issues. """
     config = CollectdConfig({'Password': 'password', 'Verbose': 'True'})
-    fc_mock = FritzConnectionMock()
-    del fc_mock.FRITZBOX_DATA[
+
+    del fc_class_mock.return_value.FRITZBOX_DATA[
         ('LANEthernetInterfaceConfig:1', 'GetStatistics')]
-    fc_class_mock.return_value = fc_mock
     MOCK.process(config)
 
 
-@mock.patch('fritzconnection.FritzConnection', autospec=True)
-@with_setup(teardown=MOCK.reset_mock)
-def test_configuration_verbose(fc_class_mock):
+@pytest.mark.usefixtures('fc_class_mock')
+def test_configuration_verbose():
     """ Test if the verbose setting causes info messages to appear. """
     config = CollectdConfig({'Password': 'password', 'Verbose': 'True'})
-    fc_class_mock.return_value = FritzConnectionMock()
 
     MOCK.process(config)
     assert MOCK.info.called
     assert MOCK.values
 
 
-@mock.patch('fritzconnection.FritzConnection', autospec=True)
-@with_setup(teardown=MOCK.reset_mock)
-@raises(IOError)
 def test_connection_error(fc_class_mock):
     """ Simulate connection error to router. """
     fc_mock = FritzConnectionMock()
     fc_class_mock.return_value = fc_mock
     type(fc_mock).modelname = mock.PropertyMock(return_value=None)
-    MOCK.process()
+    with pytest.raises(IOError):
+        MOCK.process()
 
 
-@mock.patch('fritzconnection.FritzConnection', autospec=True)
-@with_setup(teardown=MOCK.reset_mock)
-@raises(IOError)
-def test_application_access_disabled(fc_class_mock):
+def test_applicationaccess_disabled(fc_class_mock):
     """ Simulate that access for applications is deactivated on router. """
     fc_mock = FritzConnectionMock()
     fc_class_mock.return_value = fc_mock
     type(fc_mock).services = mock.PropertyMock(return_value={})
-    MOCK.process(CollectdConfig({'Password': 'password'}))
+    with pytest.raises(IOError):
+        MOCK.process(CollectdConfig({'Password': 'password'}))
 
 
-@mock.patch('fritzconnection.FritzConnection', autospec=True)
-@with_setup(teardown=MOCK.reset_mock)
-@raises(IOError)
 def test_upnp_status_disabled(fc_class_mock):
     """ Simulate that UPnP status is deactivated on router. """
     fc_mock = FritzConnectionMock()
     fc_class_mock.return_value = fc_mock
     fc_mock.call_action.side_effect = [{}]
-    MOCK.process()
+    with pytest.raises(IOError):
+        MOCK.process()
 
 
-@mock.patch('fritzconnection.FritzConnection', autospec=True)
-@with_setup(teardown=MOCK.reset_mock)
-@raises(IOError)
 def test_incorrect_password(fc_class_mock):
     """ Simulate an incorrect password on router. """
     fc_mock = FritzConnectionMock()
     fc_class_mock.return_value = fc_mock
     fc_mock.call_action.side_effect = [{0}, XMLSyntaxError(0, 0, 0, 0)]
-    MOCK.process(CollectdConfig({'Password': 'incorrect'}))
+    with pytest.raises(IOError):
+        MOCK.process(CollectdConfig({'Password': 'incorrect'}))
 
 
-@mock.patch('fritzconnection.FritzConnection', autospec=True)
-@with_setup(teardown=MOCK.reset_mock)
 def test_xmlsyntaxerror_in_read(fc_class_mock):
     """ Simulate an XMLSyntaxError exception when reading data. """
     fc_mock = FritzConnectionMock()
@@ -338,18 +338,15 @@ def test_xmlsyntaxerror_in_read(fc_class_mock):
 
 # System tests that try to interact with a real hardware device.
 
-@nottest
-@with_setup(teardown=MOCK.reset_mock)
+@pytest.mark.skip(reason="system test")
 def test_system_connection():
     """ System test: Read values of real router. """
     MOCK.process()
-    print(MOCK.values)
     assert MOCK.values
 
 
-@nottest
-@with_setup(teardown=MOCK.reset_mock)
-@raises(IOError)
+@pytest.mark.skip(reason="system test")
 def test_system_connectionfailure():
     """ System test: Attempt to connect to localhost (connection failure). """
-    MOCK.process(CollectdConfig({'Address': 'localhost'}))
+    with pytest.raises(IOError):
+        MOCK.process(CollectdConfig({'Address': 'localhost'}))

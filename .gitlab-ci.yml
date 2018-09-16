@@ -1,5 +1,3 @@
-image: python:3.5
-
 cache:
   paths:
     - .pip
@@ -8,14 +6,6 @@ cache:
 before_script:
   - pip --cache-dir=.pip install tox
 
-flake8:
-  script:
-    - tox -e flake8
-
-pylint:
-  script:
-    - tox -e pylint
-
 py27:
   image: python:2.7
   script:
@@ -23,6 +13,13 @@ py27:
   coverage: '/\S+\.py\s+(?:\d+\s+){4}(\d+\%)/'
 
 py35:
+  image: python:3.5
   script:
     - tox -e py35
+  coverage: '/\S+\.py\s+(?:\d+\s+){4}(\d+\%)/'
+
+py36:
+  image: python:3.6
+  script:
+    - tox -e py36
   coverage: '/\S+\.py\s+(?:\d+\s+){4}(\d+\%)/'
