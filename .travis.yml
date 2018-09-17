@@ -15,7 +15,7 @@ jobs:
       install: pip install tox coveralls
       after_success: coveralls
     - stage: deploy
-      python: 3.6
+      python: 3.5
       install: skip
       script: skip
       deploy:
