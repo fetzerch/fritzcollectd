@@ -6,6 +6,10 @@
     :target: https://coveralls.io/github/fetzerch/fritzcollectd?branch=master
     :alt: Coveralls Status
 
+.. image:: https://img.shields.io/pypi/v/fritzcollectd.svg
+    :target: https://pypi.org/project/fritzcollectd
+    :alt: PyPI Version
+
 fritzcollectd
 =============
 
