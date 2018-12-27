@@ -115,7 +115,7 @@ class FritzCollectd(object):
         self._fritz_password = password
         self._fritz_hostname = hostname
         self._plugin_instance = plugin_instance
-        self._verbose = True if verbose.lower() in ['true', 'yes'] else False
+        self._verbose = verbose.lower() in ['true', 'yes']
         if self._verbose:
             collectd.info("fritzcollectd: Verbose logging enabled")
         self._fc = None
