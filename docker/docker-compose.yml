@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+
+  fritzcollectd:
+    build: .
+    hostname: fritzbox
+    depends_on:
+      - influxdb
+    environment:
+      - FRITZBOX_USER
+      - FRITZBOX_PASSWORD
+
+  influxdb:
+    build: influx-provisioning
+    environment:
+      - INFLUXDB_REPORTING_DISABLED=true
+
+  grafana:
+    build: grafana-provisioning
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ALERTING_ENABLED=false
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_DISABLE_SIGNOUT_MENU=true
+    depends_on:
+      - influxdb
+
+  chronograf:
+    image: chronograf:alpine
+    command: --influxdb-url=http://influxdb:8086
+    ports:
+      - 8888:8888
+    depends_on:
+      - influxdb
