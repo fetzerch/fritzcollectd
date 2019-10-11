@@ -55,20 +55,14 @@ class FritzCollectd(object):
     # dict: {(service, service_action):
     #           {action_argument: (value_instance, value_type)}}
     SERVICE_ACTIONS = OrderedDict([
-        # Returns an empty dict if called on the authenticated connection.
-        (ServiceAction('WANIPConnection:1', 'GetStatusInfo'),
+        (ServiceAction('WANIPConn:1', 'GetStatusInfo'),
          {'NewConnectionStatus': Value('constatus', 'gauge'),
           'NewUptime': Value('uptime', 'uptime')}),
-        # Returns maximal possible bit rates on the line if called on the
-        # authenticated connection.
-        (ServiceAction('WANCommonInterfaceConfig:1',
-                       'GetCommonLinkProperties'),
+        (ServiceAction('WANCommonIFC:1', 'GetCommonLinkProperties'),
          {'NewPhysicalLinkStatus': Value('dslstatus', 'gauge'),
           'NewLayer1DownstreamMaxBitRate': Value('downstreammax', 'bitrate'),
           'NewLayer1UpstreamMaxBitRate': Value('upstreammax', 'bitrate')}),
-        # Throws 'ActionError: Unknown Action: GetAddonInfos' on the
-        # authenticated connection.
-        (ServiceAction('WANCommonInterfaceConfig:1', 'GetAddonInfos'),
+        (ServiceAction('WANCommonIFC:1', 'GetAddonInfos'),
          {'NewByteSendRate': Value('sendrate', 'bitrate'),
           'NewByteReceiveRate': Value('receiverate', 'bitrate'),
           'NewTotalBytesSent': Value('totalbytessent', 'bytes'),
@@ -149,7 +143,7 @@ class FritzCollectd(object):
             raise IOError("fritzcollectd: Failed to connect to %s" %
                           self._fritz_address)
 
-        if not self._fc.call_action('WANIPConnection:1', 'GetStatusInfo'):
+        if not self._fc.call_action('WANIPConn:1', 'GetStatusInfo'):
             self._fc = None
             raise IOError("fritzcollectd: Statusinformation via UPnP is "
                           "not enabled")
@@ -174,7 +168,7 @@ class FritzCollectd(object):
 
                 self._filter_service_actions(self.SERVICE_ACTIONS_AUTH,
                                              self._fc_auth.actionnames)
-            except XMLSyntaxError:
+            except fritzconnection.AuthorizationError:
                 self._fc = None
                 self._fc_auth = None
                 raise IOError("fritzcollectd: Incorrect password or "
