@@ -37,6 +37,8 @@ import pytest
 
 from lxml.etree import XMLSyntaxError  # pylint: disable=no-name-in-module
 
+import fritzconnection
+
 
 class CollectdMock(object):
     """ Mocks the collectd object that is injected into plugins when
@@ -142,14 +144,16 @@ class FritzConnectionMock(object):  # pylint: disable=too-few-public-methods
         to support the normal (good case) tests. """
 
     FRITZBOX_DATA = {
-        ('WANIPConnection:1', 'GetStatusInfo'):
+        ('WANIPConn:1', 'GetStatusInfo'):
         {'NewConnectionStatus': 'Connected',
          'NewUptime': 35307},
-        ('WANCommonInterfaceConfig:1', 'GetCommonLinkProperties'):
+        ('WANIPConnection:1', 'GetStatusInfo'):
+        {},
+        ('WANCommonIFC:1', 'GetCommonLinkProperties'):
         {'NewLayer1DownstreamMaxBitRate': 10087000,
          'NewLayer1UpstreamMaxBitRate': 2105000,
          'NewPhysicalLinkStatus': 'Up'},
-        ('WANCommonInterfaceConfig:1', 'GetAddonInfos'):
+        ('WANCommonIFC:1', 'GetAddonInfos'):
         {'NewByteSendRate': 3438,
          'NewByteReceiveRate': 67649,
          'NewTotalBytesSent': 1712232562,
@@ -323,7 +327,8 @@ def test_incorrect_password(fc_class_mock):
     """ Simulate an incorrect password on router. """
     fc_mock = FritzConnectionMock()
     fc_class_mock.return_value = fc_mock
-    fc_mock.call_action.side_effect = [{0}, XMLSyntaxError(0, 0, 0, 0)]
+    fc_mock.call_action.side_effect = [
+        {0}, fritzconnection.AuthorizationError(0, 0, 0, 0)]
     with pytest.raises(IOError):
         MOCK.process(CollectdConfig({'Password': 'incorrect'}))
 

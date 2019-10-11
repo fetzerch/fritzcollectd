@@ -19,5 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-fritzconnection>=0.6.0,<0.8.0
+# Version <0.8 had broken service names. Version 1.0 no longer supports
+# Python 2.7.
+fritzconnection>=0.8.0,<1.0.0
 pbr
