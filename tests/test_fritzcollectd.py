@@ -89,6 +89,8 @@ class CollectdMock(object):
             self._cb_init()
             self._cb_read()
         finally:
+            # Make sure read also can be called if init failed before.
+            self._cb_read()
             self._cb_shutdown()
 
     def Values(self):  # pylint: disable=invalid-name
@@ -203,20 +205,11 @@ class FritzConnectionMock(object):  # pylint: disable=too-few-public-methods
         self.call_action = mock.Mock(side_effect=self._side_effect_callaction)
         type(self).actionnames = mock.PropertyMock(
             side_effect=self._side_effect_actionnames)
-
-        # The production code uses two FritzConnection instances, one without
-        # and one with authentication. The one with authentication supports
-        # more services. As there's currently no easy way to differenciate
-        # them in tests, we rely on the order of the services() calls.
         services = {
             srv: None for srv, _ in list(self.FRITZBOX_DATA.keys())
+            + list(self.FRITZBOX_DATA_INDEXED.keys())
         }
-        auth_services = services.copy()
-        auth_services.update({
-            srv: None for srv, _ in list(self.FRITZBOX_DATA_INDEXED.keys())
-        })
-        type(self).services = mock.PropertyMock(
-            side_effect=[auth_services, services])
+        type(self).services = mock.PropertyMock(side_effect=[services])
 
     def _side_effect_callaction(self, service, action, **kwargs):
         if kwargs:
@@ -274,7 +267,7 @@ def test_configuration(fc_class_mock):
     assert MOCK.warning.called
     assert MOCK.values
     assert MOCK.values[0].host == 'hostname'
-    assert MOCK.values[0].plugin_instance == 'instance'
+    assert 'instance' in MOCK.values[0].plugin_instance
 
 
 def test_unsupported_service(fc_class_mock):
@@ -337,7 +330,8 @@ def test_xmlsyntaxerror_in_read(fc_class_mock):
     """ Simulate an XMLSyntaxError exception when reading data. """
     fc_mock = FritzConnectionMock()
     fc_class_mock.return_value = fc_mock
-    fc_mock.call_action.side_effect = [{0}, XMLSyntaxError(0, 0, 0, 0), {0}]
+    fc_mock.call_action.side_effect = [{0}, XMLSyntaxError(0, 0, 0, 0), {0},
+                                       XMLSyntaxError(0, 0, 0, 0), {0}]
     MOCK.process()
 
 

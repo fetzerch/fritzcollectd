@@ -66,11 +66,7 @@ class FritzCollectd(object):
          {'NewByteSendRate': Value('sendrate', 'bitrate'),
           'NewByteReceiveRate': Value('receiverate', 'bitrate'),
           'NewTotalBytesSent': Value('totalbytessent', 'bytes'),
-          'NewTotalBytesReceived': Value('totalbytesreceived', 'bytes')})
-    ])
-
-    # Services/Actions that require authentication with password
-    SERVICE_ACTIONS_AUTH = OrderedDict([
+          'NewTotalBytesReceived': Value('totalbytesreceived', 'bytes')}),
         (ServiceAction('DeviceInfo:1', 'GetInfo'),
          {'NewUpTime': Value('boxuptime', 'uptime')}),
         (ServiceAction('LANEthernetInterfaceConfig:1', 'GetStatistics'),
@@ -113,7 +109,6 @@ class FritzCollectd(object):
         if self._verbose:
             collectd.info("fritzcollectd: Verbose logging enabled")
         self._fc = None
-        self._fc_auth = None
 
     def _dispatch_value(self, plugin_instance,
                         value_type, value_instance, value):
@@ -137,7 +132,7 @@ class FritzCollectd(object):
         """ Initialize the connection to the FRITZ!Box """
         self._fc = fritzconnection.FritzConnection(
             address=self._fritz_address, port=self._fritz_port,
-            user=self._fritz_user)
+            user=self._fritz_user, password=self._fritz_password)
         if self._fc.modelname is None:
             self._fc = None
             raise IOError("fritzcollectd: Failed to connect to %s" %
@@ -148,34 +143,26 @@ class FritzCollectd(object):
             raise IOError("fritzcollectd: Statusinformation via UPnP is "
                           "not enabled")
 
-        self._filter_service_actions(self.SERVICE_ACTIONS,
-                                     self._fc.actionnames)
-
         if self._fritz_password != '':
-            self._fc_auth = fritzconnection.FritzConnection(
-                address=self._fritz_address, port=self._fritz_port,
-                user=self._fritz_user, password=self._fritz_password)
-
             # If the 'Allow access for applications' option is disabled,
             # the connection behaves as if it was created without password.
-            if self._fc.services.keys() == self._fc_auth.services.keys():
+            if 'WANIPConnection:1' not in self._fc.services.keys():
+                self._fc = None
                 raise IOError("fritzcollectd: Allow access for applications "
                               "is not enabled")
 
             try:
-                self._fc_auth.call_action('WANIPConnection:1',
-                                          'GetStatusInfo')
-
-                self._filter_service_actions(self.SERVICE_ACTIONS_AUTH,
-                                             self._fc_auth.actionnames)
+                self._fc.call_action('WANIPConnection:1', 'GetStatusInfo')
             except fritzconnection.AuthorizationError:
                 self._fc = None
-                self._fc_auth = None
                 raise IOError("fritzcollectd: Incorrect password or "
                               "'FRITZ!Box Settings' rights for user disabled")
         else:
             collectd.info("fritzcollectd: No password configured, "
                           "some values cannot be queried")
+
+        self._filter_service_actions(self.SERVICE_ACTIONS,
+                                     self._fc.actionnames)
 
     @classmethod
     def _filter_service_actions(cls, service_actions, actionnames):
@@ -191,10 +178,6 @@ class FritzCollectd(object):
     def read(self):
         """ Read and dispatch """
         values = self._read_data(self.SERVICE_ACTIONS, self._fc)
-        for (instance, value_instance), (value_type, value) in values.items():
-            self._dispatch_value(instance, value_type, value_instance, value)
-
-        values = self._read_data(self.SERVICE_ACTIONS_AUTH, self._fc_auth)
         for (instance, value_instance), (value_type, value) in values.items():
             self._dispatch_value(instance, value_type, value_instance, value)
 
