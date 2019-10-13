@@ -23,3 +23,16 @@ py36:
   script:
     - tox -e py36
   coverage: '/\S+\.py\s+(?:\d+\s+){4}(\d+\%)/'
+
+docker:
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: "/certs"
+  services:
+    - docker:dind
+  before_script:
+    - apk add --no-cache docker-compose
+  script:
+    - docker-compose -f docker/docker-compose.yml build
+  tags:
+    - docker-in-docker

@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  collectd:
+    build: .
+    environment:
+      - FRITZBOX_HOST
+      - FRITZBOX_PORT
+      - FRITZBOX_USER
+      - FRITZBOX_PASSWORD
+      - FRITZBOX_HOSTNAME
+      - INSTANCE
+      - VERBOSE
+    volumes:
+      # Mount development version of the plugin into the container.
+      - ..:/fritzcollectd:ro
+    depends_on:
+      - influxdb
+
+  grafana:
+    build: grafana-fritzcollectd
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ALERTING_ENABLED=false
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_DISABLE_SIGNOUT_MENU=true
+    depends_on:
+      - influxdb
+
+  influxdb:
+    build: influxdb-collectd
+    environment:
+      - INFLUXDB_REPORTING_DISABLED=true
