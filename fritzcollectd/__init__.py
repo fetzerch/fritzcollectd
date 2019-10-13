@@ -82,6 +82,11 @@ class FritzCollectd(object):
         (ServiceAction('LANEthernetInterfaceConfig:1', 'GetStatistics'),
          {'NewBytesSent': Value('lan_totalbytessent', 'bytes'),
           'NewBytesReceived': Value('lan_totalbytesreceived', 'bytes')}),
+        (ServiceAction('WANCommonInterfaceConfig:1',
+                       'GetCommonLinkProperties'),
+         {'NewLayer1DownstreamMaxBitRate':
+          Value('linkdownstreammax', 'bitrate'),
+          'NewLayer1UpstreamMaxBitRate': Value('linkupstreammax', 'bitrate')}),
         (ServiceAction('X_AVM-DE_Homeauto:1', 'GetGenericDeviceInfos',
                        'NewIndex', 'NewIndex', 'dect'),
          {'NewMultimeterPower': Value('power', 'power'),
