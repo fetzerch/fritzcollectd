@@ -109,6 +109,11 @@ Please refer to the `project announcement blog post <https://fetzerch.github.io/
 for additional information, such as the usage of `Grafana <http://grafana.org>`__
 for metrics visualization.
 
+Docker Support
+--------------
+
+Please see the ``docker`` directory for running fritzcollectd via Docker.
+
 License
 -------
 This projected is licensed under the terms of the MIT license.
