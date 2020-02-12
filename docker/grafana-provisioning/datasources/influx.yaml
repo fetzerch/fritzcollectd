@@ -1,0 +1,11 @@
+# config file version
+apiVersion: 1
+
+datasources:
+  - name: influxdb
+    type: influxdb
+    access: proxy
+    database: collectd
+    url: http://influxdb:8086
+    isDefault: true
+    editable: false
