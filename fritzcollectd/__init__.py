@@ -27,6 +27,7 @@ from collections import namedtuple, OrderedDict
 
 import fritzconnection
 import pbr.version
+import time
 
 from lxml.etree import XMLSyntaxError  # pylint: disable=no-name-in-module
 
@@ -134,10 +135,16 @@ class FritzCollectd(object):
         val.dispatch()
 
     def init(self):
-        """ Initialize the connection to the FRITZ!Box """
-        self._fc = fritzconnection.FritzConnection(
-            address=self._fritz_address, port=self._fritz_port,
-            user=self._fritz_user, password=self._fritz_password)
+        for i in range(10):
+            """ Initialize the connection to the FRITZ!Box """
+            collectd.info("fritzcollectd: Connecting to FRITZ Box ...")
+            self._fc = fritzconnection.FritzConnection(
+                address=self._fritz_address, port=self._fritz_port,
+                user=self._fritz_user, password=self._fritz_password)
+            if not self._fc.modelname is None:
+                break
+            collectd.info("fritzcollectd: Retrying in 3 seconds ...")
+            time.sleep(3)
         if self._fc.modelname is None:
             self._fc = None
             raise IOError("fritzcollectd: Failed to connect to %s" %
